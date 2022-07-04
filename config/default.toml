@@ -1,2 +1,7 @@
 [imap]
 quotes="Bye MaPl LZU CoreMail Proxy"
+port=993
+loggerLevel="info"
+tls=true
+tlsKey="imap.key"
+tlsCert="imap.pem"

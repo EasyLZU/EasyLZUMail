@@ -2,20 +2,32 @@ const { IMAPServer } = require('wildduck/imap-core')
 const { EventEmitter } = require('events')
 const { CoreMailWebClient } = require('./LZUMail')
 const { LZUMailHandler } = require('./LZUMailHandler')
+const config = require('wild-config')
 const log4js = require("log4js")
+const fs = require('fs')
 
 /* IMAP服务器配置 */
 const server = new IMAPServer({
-    logger: false,
     skipFetchLog: false,
-    disableSTARTTLS: true,
-    ignoreSTARTTLS: true,
-    acceptUTF8Enabled: false
+    secure: config.imap.tls,
+    needsUpgrade: !config.imap.tls,
+    disableSTARTTLS: false,
+    ignoreSTARTTLS: false,
+    acceptUTF8Enabled: false,
+    key: config.imap.tls && fs.readFileSync(config.imap.tlsKey),
+    cert: config.imap.tls && fs.readFileSync(config.imap.tlsCert),
+    ciphers: 'ECDHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA256:AES128-GCM-SHA256:RC4:HIGH:!MD5:!aNULL'
 })
+
 server.logger = log4js.getLogger('IMAPServer')
-server.logger._info = server.logger.info
-server.logger.info = (obj, ...args) => server.logger._info(...args)
-server.logger.level = 'info'
+for (const logLevel of Object.keys(server.logger.__proto__)) {
+    if (['debug', 'info', 'warn', 'error'].includes(logLevel)) {
+        server.logger['_'+logLevel] = server.logger[logLevel]
+        server.logger[logLevel] = (obj, ...args) => server.logger['_'+logLevel](...args)
+    }
+}
+server.logger.level = config.imap.loggerLevel || 'info'
+
 server.notifier = new EventEmitter()
 server.on('error', err => {
     console.log('SERVER ERR\n%s', err.stack)
@@ -103,4 +115,4 @@ server.onSearch = function (mailbox, options, session, callback) {
     })
 }
 
-server.listen(143)
+server.listen(config.imap.port || 993)
