@@ -1,0 +1,13 @@
+{
+  "name": "lzumailproxy",
+  "version": "1.0.0",
+  "description": "LZU Mail Proxy",
+  "main": "app.js",
+  "scripts": {},
+  "author": "MaPl",
+  "license": "MIT",
+  "dependencies": {
+    "log4js": "^6.5.2",
+    "wildduck": "^1.0.104"
+  }
+}
