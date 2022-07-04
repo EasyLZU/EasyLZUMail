@@ -63,7 +63,7 @@ server.onAuth = function (login, session, callback) {
                 return callback()
             })
         }
-    })
+    }, () => false)
 }
 
 server.onList = function (query, session, callback) {
