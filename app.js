@@ -62,26 +62,27 @@ server.onAuth = function (login, session, callback) {
     if (!username.match(/^[a-zA-Z0-9]+@lzu\.edu\.cn$/g)) {
         return callback()
     }
-    await sp.wait()
-    let client = WebClientCache.get([username, login.password])
-    if (!client) {
-        client = new CoreMailWebClient()
-        client.login(username, login.password).then(() => {
-            const handler = new LZUMailHandler(client)
-            session.webHandler = handler
-            WebClientCache.set([username, login.password], client)
-            sp.post()
-            return callback(null, {
-                user: {
-                    id: 'lzu.' + username,
-                    username: username
-                }
+    sp.wait().then(() => {
+        let client = WebClientCache.get([username, login.password])
+        if (!client) {
+            client = new CoreMailWebClient()
+            client.login(username, login.password).then(() => {
+                const handler = new LZUMailHandler(client)
+                session.webHandler = handler
+                WebClientCache.set([username, login.password], client)
+                sp.post()
+                return callback(null, {
+                    user: {
+                        id: 'lzu.' + username,
+                        username: username
+                    }
+                })
+            }).catch((reason) => {
+                console.error(reason)
+                return callback()
             })
-        }).catch((reason) => {
-            console.error(reason)
-            return callback()
-        })
-    }
+        }
+    })
 }
 
 server.onList = function (query, session, callback) {
