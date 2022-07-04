@@ -5,28 +5,9 @@ const { LZUMailHandler } = require('./LZUMailHandler')
 const config = require('wild-config')
 const log4js = require("log4js")
 const fs = require('fs')
+const AsyncLock = require('async-lock')
 
-class Semaphore {
-    constructor(value = 1) {
-        this.value = value
-        this.queen = []
-    }
-    async wait() {
-        this.value--
-        if (this.value < 0) {
-            await (new Promise((resolve, reject) => {
-                this.queen.push(resolve)
-            }))
-        }
-    }
-    post() {
-        this.value++
-        if(this.value <= 0) {
-            this.queen.shift()()
-        }
-    }
-}
-const sp = new Semaphore()
+const lock = new AsyncLock()
 
 /* IMAP服务器配置 */
 const server = new IMAPServer({
@@ -62,7 +43,7 @@ server.onAuth = function (login, session, callback) {
     if (!username.match(/^[a-zA-Z0-9]+@lzu\.edu\.cn$/g)) {
         return callback()
     }
-    sp.wait().then(() => {
+    lock.acquire.then(() => {
         let client = WebClientCache.get([username, login.password])
         if (!client) {
             client = new CoreMailWebClient()
@@ -70,7 +51,6 @@ server.onAuth = function (login, session, callback) {
                 const handler = new LZUMailHandler(client)
                 session.webHandler = handler
                 WebClientCache.set([username, login.password], client)
-                sp.post()
                 return callback(null, {
                     user: {
                         id: 'lzu.' + username,
