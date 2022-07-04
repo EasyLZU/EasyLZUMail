@@ -43,7 +43,7 @@ server.onAuth = function (login, session, callback) {
     if (!username.match(/^[a-zA-Z0-9]+@lzu\.edu\.cn$/g)) {
         return callback()
     }
-    lock.acquire('login', (done) => {
+    lock.acquire(WebClientCache, (done) => {
         let client = WebClientCache.get([username, login.password])
         if (!client) {
             client = new CoreMailWebClient()
